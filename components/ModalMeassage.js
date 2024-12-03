@@ -1,22 +1,50 @@
-import React from "react";
-import { Modal, View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import React, { useEffect, useRef } from "react";
+import {
+  Modal,
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Animated,
+} from "react-native";
 import COLORS from "../components/Colors";
+
 const ModalMessage = ({
   visible,
   message,
   onConfirm,
   onCancel,
-  singleButton,
+  singleButton = false,
 }) => {
+  const fadeAnim = useRef(new Animated.Value(0)).current; // Khởi tạo giá trị Animated
+
+  useEffect(() => {
+    if (visible) {
+      // Khi modal mở
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300, // Thời gian hiệu ứng mở
+        useNativeDriver: true,
+      }).start();
+    } else {
+      // Khi modal đóng
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 300, // Thời gian hiệu ứng đóng
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [visible]);
+
   return (
     <Modal
       transparent={true}
-      animationType="slide"
+      animationType="none" // Đặt animationType thành 'none' vì chúng ta sẽ sử dụng Animated API
       visible={visible}
       onRequestClose={onCancel} // Đóng modal khi nhấn nút quay lại
     >
       <View style={styles.overlay}>
-        <View style={styles.modalContainer}>
+        <Animated.View style={[styles.modalContainer, { opacity: fadeAnim }]}>
           <Text style={styles.message}>{message}</Text>
           <View style={styles.buttonContainer}>
             {singleButton ? (
@@ -34,7 +62,7 @@ const ModalMessage = ({
               </>
             )}
           </View>
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );

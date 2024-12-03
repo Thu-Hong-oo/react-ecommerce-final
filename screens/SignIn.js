@@ -12,6 +12,7 @@ import { FontAwesome } from "@expo/vector-icons";
 import COLORS from "../components/Colors";
 import { auth } from "../config/firebaseConfig";
 import { useDispatch } from "react-redux"; // Import useDispatch
+import {} from "../config/googleSignInConfig";
 import { setUser } from "../redux/slices/userSlice"; // Import action setUser
 import {
   signInWithEmailAndPassword,
@@ -19,8 +20,14 @@ import {
   signInWithRedirect,
   getRedirectResult,
   signInWithPopup,
+  signInWithCredential,
 } from "firebase/auth";
 import ModalMessage from "../components/ModalMeassage";
+import { configureGoogleSignIn } from "../config/googleSignInConfig";
+import {
+  GoogleSignin,
+  statusCodes,
+} from "@react-native-google-signin/google-signin";
 import { fetchUserData } from "../services/userServices";
 const SignIn = ({ navigation }) => {
   const dispatch = useDispatch(); // Khởi tạo dispatch
@@ -28,7 +35,9 @@ const SignIn = ({ navigation }) => {
   const [password, setPassword] = useState("password123");
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
-
+  useEffect(() => {
+    configureGoogleSignIn(); // Cấu hình Google Sign-In
+  }, []);
   const handleLogin = async () => {
     try {
       const userCredential = await signInWithEmailAndPassword(
@@ -55,7 +64,7 @@ const SignIn = ({ navigation }) => {
           })
         );
       }
-
+  
       navigation.navigate("Home"); // Chuyển sang trang Home
     } catch (error) {
       setModalMessage("Incorrect password. Please try again."); // Cập nhật thông điệp lỗi
@@ -64,29 +73,59 @@ const SignIn = ({ navigation }) => {
   };
 
   const handleGoogleLogin = async () => {
-    const provider = new GoogleAuthProvider();
-    try {
-      if (Platform.OS === "web") {
-        await signInWithRedirect(auth, provider);
-      } else {
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
+    if (Platform.OS === "web") {
+      try {
+        const provider = new GoogleAuthProvider();
+        await signInWithRedirect(auth, provider); // Use signInWithRedirect for web
+        const result = await getRedirectResult(auth);
 
-        // Lấy thông tin từ Firestore
-        const userData = await fetchUserData(user.uid);
-        dispatch(
-          setUser({
-            name: userData.personal_information.personal_info.full_name,
-            avatar: userData.personal_information.personal_info.avatar || null,
-            email: userData.personal_information.personal_info.email,
-          })
-        );
-        alert("Login successful!");
-        navigation.navigate("Home");
+        if (result) {
+          const user = result.user;
+          const userInfo = {
+            id: user.uid,
+            displayName: user.displayName,
+            email: user.email,
+            photoURL: user.photoURL,
+          };
+
+          dispatch(setUser(userInfo)); // Store user in Redux
+
+          setModalMessage("Login successful!");
+          setModalVisible(true);
+          navigation.navigate("Home");
+        }
+      } catch (error) {
+        console.error("Google Login Error on Web:", error);
+        setModalMessage("Failed to log in with Google.");
+        setModalVisible(true);
       }
-    } catch (error) {
-      console.error("Google Login Error:", error); // Log lỗi
-      alert(error.message);
+    } else {
+      // Native or mobile-specific logic
+      try {
+        const { idToken } = await GoogleSignin.signIn();
+        const googleCredential = GoogleAuthProvider.credential(idToken);
+        const userCredential = await signInWithCredential(
+          auth,
+          googleCredential
+        );
+
+        const userInfo = {
+          id: userCredential.user.uid,
+          displayName: userCredential.user.displayName,
+          email: userCredential.user.email,
+          photoURL: userCredential.user.photoURL,
+        };
+
+        dispatch(setUser(userInfo));
+
+        setModalMessage("Login successful!");
+        setModalVisible(true);
+        navigation.navigate("Home");
+      } catch (error) {
+        console.error("Google Login Error:", error);
+        setModalMessage("Failed to log in with Google.");
+        setModalVisible(true);
+      }
     }
   };
 

@@ -46,16 +46,9 @@ async function addUserData(email, password) {
           searches: ["laptop", "shoes", "watch"],
         },
       },
-      favorites: {
-        favorite_products: {
-          product_ids: ["product_000001", "product_000002"],
-        },
-      },
-      cart: {
-        current_cart: {
-          product_ids: ["product_003"],
-        },
-      },
+      favorites: []       
+      ,
+
     };
 
     // Lưu dữ liệu người dùng vào Firestore với UID thực
@@ -67,6 +60,6 @@ async function addUserData(email, password) {
 }
 
 // Gọi hàm với email và mật khẩu cụ thể
-const email = "nguyenngoctuongvan3003@gmail.com";
+const email = "thuhong05022003@gmail.com";
 const password = "password123"; // Mật khẩu người dùng nhập
 addUserData(email, password);
