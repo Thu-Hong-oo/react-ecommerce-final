@@ -63,6 +63,7 @@ export async function addUserData(
         personal_info: {
           full_name: fullName || "No Name", // Tên người dùng
           gender: gender || "Not specified", // Giới tính
+          avatar:"https://t4.ftcdn.net/jpg/05/49/98/39/240_F_549983970_bRCkYfk0P6PP5fKbMhZMIb07mCJ6esXL.jpg",
           dob: dob || "Not specified", // Ngày sinh
           phone: phone || "Not specified", // Số điện thoại
           email: email, // Email người dùng
